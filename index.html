@@ -1,0 +1,2411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thermal Mesh — Decentralized Inference Router</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080a0f;
+      --bg-elevate: #0d1017;
+      --panel: #10141c;
+      --panel-2: #0b0e14;
+      --border: #1d232f;
+      --border-soft: #171c26;
+      --text: #e8ebf1;
+      --text-dim: #8790a3;
+      --text-faint: #565f70;
+      --cool: #38bdf8;
+      --warm: #f59e0b;
+      --hot: #ef4444;
+      --success: #34d399;
+      --n1: #38bdf8;
+      --n1-soft: #38bdf822;
+      --n2: #a78bfa;
+      --n2-soft: #a78bfa22;
+      --n3: #f472b6;
+      --n3-soft: #f472b622;
+      --n4: #fb923c;
+      --n4-soft: #fb923c22;
+      --n5: #34d399;
+      --n5-soft: #34d39922;
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 600px at 78% -8%, #101a26 0%, transparent 60%),
+        radial-gradient(900px 500px at 5% 105%, #170f1c 0%, transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    ::selection {
+      background: #38bdf844;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--cool);
+      outline-offset: 2px;
+    }
+
+    /* ---------- Topbar ---------- */
+    .topbar {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 18px 26px 14px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .topbar .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .topbar h1 {
+      font-family: var(--font-display);
+      font-size: 1.28rem;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: .2px;
+    }
+
+    .topbar h1 span {
+      color: var(--cool);
+    }
+
+    .topbar .tag {
+      font-family: var(--font-mono);
+      font-size: .68rem;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      border: 1px solid var(--border);
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+
+    .topbar .meta {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      color: var(--text-faint);
+      text-align: right;
+      line-height: 1.5;
+    }
+
+    .topbar .meta b {
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    /* ---------- Workspace ---------- */
+    .workspace {
+      display: flex;
+      gap: 16px;
+      padding: 16px 16px 0;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .rail {
+      width: 296px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .card h2 {
+      font-family: var(--font-display);
+      font-size: .78rem;
+      font-weight: 600;
+      margin: 0 0 12px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    .field-row label {
+      font-size: .78rem;
+      color: var(--text-dim);
+    }
+
+    .field-row .val {
+      font-family: var(--font-mono);
+      font-size: .78rem;
+      color: var(--cool);
+      font-weight: 600;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--cool), var(--warm) 60%, var(--hot));
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--bg);
+      box-shadow: 0 0 0 1px var(--border);
+      cursor: pointer;
+    }
+
+    input[type=range]:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    .req-preview {
+      font-family: var(--font-mono);
+      font-size: .74rem;
+      line-height: 1.5;
+      color: var(--text-dim);
+      background: var(--panel-2);
+      border: 1px solid var(--border-soft);
+      border-radius: 7px;
+      padding: 10px 11px;
+      margin-bottom: 14px;
+    }
+
+    .req-preview .k {
+      color: var(--text-faint);
+    }
+
+    button.run {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      background: var(--cool);
+      color: #04121c;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: .88rem;
+      letter-spacing: .02em;
+      transition: transform .12s ease, background .2s ease;
+    }
+
+    button.run:hover:not(:disabled) {
+      background: #5cd0ff;
+    }
+
+    button.run:active:not(:disabled) {
+      transform: scale(.98);
+    }
+
+    button.run:disabled {
+      background: var(--border);
+      color: var(--text-faint);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ---------- Tabs Navigation ---------- */
+    .nav-tabs {
+      display: flex;
+      gap: 20px;
+      margin-left: 40px;
+      flex: 1;
+    }
+
+    .nav-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-family: var(--font-display);
+      font-size: .88rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 6px 4px;
+      border-bottom: 2px solid transparent;
+      transition: color .2s ease, border-color .2s ease;
+      letter-spacing: .02em;
+    }
+
+    .nav-tab:hover {
+      color: var(--text);
+    }
+
+    .nav-tab.active {
+      color: var(--cool);
+      border-bottom-color: var(--cool);
+    }
+
+    /* ---------- Tab Content ---------- */
+    .tab-content {
+      display: none;
+      height: 100%;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    /* ---------- Dashboards UI ---------- */
+    .dashboard-container {
+      display: flex;
+      gap: 20px;
+      padding: 24px;
+      height: 100%;
+      overflow: auto;
+    }
+
+    .col-main {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .col-side {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-family: var(--font-display);
+      font-size: .82rem;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .form-control {
+      width: 100%;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: .9rem;
+      transition: border-color .2s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--cool);
+    }
+
+    .btn {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: .88rem;
+      transition: transform .12s ease, background .2s ease, filter .2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--cool);
+      color: #04121c;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-primary:active {
+      transform: scale(.98);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--cool);
+      color: var(--cool);
+    }
+
+    .btn-outline:hover {
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    .btn-outline:active {
+      transform: scale(.98);
+    }
+
+    .campaign-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .campaign-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .campaign-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .campaign-category {
+      font-family: var(--font-mono);
+      font-size: .7rem;
+      color: var(--cool);
+      background: rgba(56, 189, 248, 0.1);
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      width: fit-content;
+    }
+
+    .campaign-progress-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+
+    .campaign-progress-fill {
+      height: 100%;
+      background: var(--success);
+      transition: width 0.4s ease;
+    }
+
+    .campaign-stats {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: .8rem;
+    }
+
+    button.run:disabled {
+      background: #232a36;
+      color: var(--text-faint);
+      cursor: not-allowed;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-row button.run {
+      flex: 1;
+    }
+
+    button.btn-secondary {
+      flex: 1;
+      padding: 12px;
+      border-radius: 7px;
+      cursor: pointer;
+      background: transparent;
+      border: 1.5px solid var(--border);
+      color: var(--text-dim);
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: .88rem;
+      transition: border-color .2s ease, color .2s ease;
+    }
+
+    button.btn-secondary:hover:not(:disabled) {
+      border-color: var(--cool);
+      color: var(--cool);
+    }
+
+    button.btn-secondary:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    button.btn-ghost {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text-faint);
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    button.btn-ghost:hover {
+      color: var(--text-dim);
+    }
+
+    .phase-hint {
+      margin-top: 10px;
+      font-family: var(--font-mono);
+      font-size: .7rem;
+      color: var(--text-faint);
+      line-height: 1.5;
+      min-height: 2.2em;
+    }
+
+    .legend {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .legend .row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: .76rem;
+      color: var(--text-dim);
+    }
+
+    .legend .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .assign-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .assign-list::-webkit-scrollbar {
+      width: 7px;
+    }
+
+    .assign-list::-webkit-scrollbar-thumb {
+      background: #232a36;
+      border-radius: 4px;
+    }
+
+    .assign-empty {
+      font-family: var(--font-mono);
+      font-size: .74rem;
+      color: var(--text-faint);
+    }
+
+    .assign-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: .74rem;
+      color: var(--text-dim);
+      background: var(--panel-2);
+      border: 1px solid var(--border-soft);
+      border-left: 3px solid;
+      border-radius: 5px;
+      padding: 6px 9px;
+    }
+
+    .assign-row .an {
+      font-weight: 600;
+    }
+
+    .assign-row .ar {
+      color: var(--text-faint);
+    }
+
+    .assign-row .ar em {
+      font-style: normal;
+      color: var(--text-faint);
+    }
+
+    .log-card {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .log-panel {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      background: var(--panel-2);
+      border: 1px solid var(--border-soft);
+      border-radius: 7px;
+      padding: 10px 11px;
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      line-height: 1.65;
+    }
+
+    .log-panel::-webkit-scrollbar {
+      width: 7px;
+    }
+
+    .log-panel::-webkit-scrollbar-thumb {
+      background: #232a36;
+      border-radius: 4px;
+    }
+
+    .log-entry {
+      color: var(--text-faint);
+      white-space: pre-wrap;
+    }
+
+    .log-entry .t {
+      color: #3a4152;
+      margin-right: 6px;
+    }
+
+    .log-entry.info {
+      color: #7fb8db;
+    }
+
+    .log-entry.warn {
+      color: var(--warm);
+    }
+
+    .log-entry.success {
+      color: var(--success);
+    }
+
+    .log-entry.error {
+      color: var(--hot);
+      font-weight: 600;
+    }
+
+    /* ---------- Stage ---------- */
+    .stage {
+      flex: 1;
+      display: flex;
+      gap: 0;
+      min-height: 0;
+      padding-bottom: 16px;
+    }
+
+    .topology-panel {
+      width: 420px;
+      flex-shrink: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+      min-width: 200px;
+    }
+
+    /* ---------- Draggable divider ---------- */
+    .stage-divider {
+      width: 12px;
+      flex-shrink: 0;
+      cursor: col-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 15;
+      user-select: none;
+    }
+
+    .stage-divider::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 48px;
+      border-radius: 2px;
+      background: #232a36;
+      transition: background .2s ease, height .2s ease, box-shadow .2s ease;
+    }
+
+    .stage-divider:hover::before,
+    .stage-divider.dragging::before {
+      background: var(--cool);
+      height: 64px;
+      box-shadow: 0 0 12px rgba(56, 189, 248, .35);
+    }
+
+    .stage-divider.dragging {
+      cursor: col-resize;
+    }
+
+    body.col-resizing {
+      cursor: col-resize !important;
+      user-select: none !important;
+    }
+
+    body.col-resizing * {
+      cursor: col-resize !important;
+    }
+
+    .panel-title {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      z-index: 10;
+      font-family: var(--font-display);
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: .12em;
+    }
+
+    .req-node {
+      position: absolute;
+      top: 7%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(78%, 460px);
+      text-align: center;
+      z-index: 6;
+    }
+
+    .req-node .pill {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: .68rem;
+      color: var(--text-dim);
+      background: var(--panel-2);
+      border: 1px solid var(--border-soft);
+      padding: 7px 13px;
+      border-radius: 20px;
+      max-width: 100%;
+    }
+
+    .sys-node {
+      position: absolute;
+      width: 118px;
+      padding: 10px 8px;
+      border-radius: 9px;
+      border: 1.5px solid var(--border);
+      background: var(--bg-elevate);
+      text-align: center;
+      transform: translate(-50%, -50%);
+      transition: border-color .35s ease, box-shadow .35s ease, transform .35s ease;
+      z-index: 5;
+    }
+
+    .sys-node .name {
+      font-family: var(--font-display);
+      font-size: .72rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .sys-node .stat {
+      font-family: var(--font-mono);
+      font-size: .6rem;
+      color: var(--text-faint);
+      margin: 3px 0 0;
+    }
+
+    .sys-node .temp {
+      font-family: var(--font-mono);
+      font-size: .94rem;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .sys-node.computing {
+      box-shadow: 0 0 0 1px currentColor, 0 0 22px -4px currentColor;
+      transform: translate(-50%, -50%) scale(1.06);
+    }
+
+    .sys-node.checkpoint {
+      animation: pulse-warn 0.6s ease infinite alternate;
+    }
+
+    @keyframes pulse-warn {
+      from {
+        box-shadow: 0 0 0 1px var(--hot);
+      }
+
+      to {
+        box-shadow: 0 0 18px -2px var(--hot);
+      }
+    }
+
+    .thermo-track {
+      position: absolute;
+      right: -13px;
+      top: 8px;
+      bottom: 8px;
+      width: 6px;
+      background: #05070b;
+      border: 1px solid var(--border-soft);
+      border-radius: 3px;
+      display: flex;
+      align-items: flex-end;
+      overflow: hidden;
+    }
+
+    .thermo-fill {
+      width: 100%;
+      height: 10%;
+      background: var(--cool);
+      transition: height .5s ease, background-color .5s ease;
+    }
+
+    /* PC icon inside each node */
+    .pc-icon {
+      display: block;
+      margin: 0 auto 4px;
+      opacity: 0.75;
+    }
+
+    #orchestrator {
+      top: 50%;
+      left: 50%;
+      width: 136px;
+      padding: 12px 10px;
+      background: #0b1524;
+      border-color: #2a4a70;
+      z-index: 11;
+    }
+
+    #orchestrator .name {
+      color: #bfe0ff;
+    }
+
+    .result-node {
+      position: absolute;
+      bottom: 5%;
+      left: 50%;
+      transform: translate(-50%, 0);
+      width: min(84%, 480px);
+      z-index: 6;
+    }
+
+    .result-card {
+      border: 1px dashed var(--border);
+      border-radius: 9px;
+      padding: 12px 14px;
+      background: var(--panel-2);
+      text-align: center;
+      transition: .4s ease;
+    }
+
+    .result-card .lbl {
+      font-family: var(--font-mono);
+      font-size: .64rem;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+
+    .result-card .cls {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-faint);
+      margin-top: 4px;
+    }
+
+    .result-card .conf {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      color: var(--text-faint);
+      margin-top: 2px;
+    }
+
+    .result-card.ready {
+      border-style: solid;
+      border-color: var(--success);
+      background: #0e1c17;
+    }
+
+    .result-card.ready .cls {
+      color: var(--success);
+    }
+
+    .result-card.ready .conf {
+      color: #8fdcc0;
+    }
+
+    .result-card .ledger {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-soft);
+      font-family: var(--font-mono);
+      font-size: .63rem;
+      color: var(--text-faint);
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: opacity .5s ease;
+    }
+
+    .result-card .ledger.show {
+      opacity: 1;
+      max-height: 60px;
+    }
+
+    svg.connections {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    line.wire {
+      stroke: var(--border);
+      stroke-width: 1.5;
+      transition: stroke .3s ease, stroke-width .3s ease;
+    }
+
+    line.wire.active {
+      stroke-width: 2.5;
+    }
+
+    line.wire.flow {
+      stroke-dasharray: 4 5;
+      animation: march .5s linear infinite;
+    }
+
+    @keyframes march {
+      to {
+        stroke-dashoffset: -9;
+      }
+    }
+
+    .packet {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      opacity: 0;
+      z-index: 20;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    /* Packet value tag that rides alongside the dot */
+    #packet-values {
+      position: absolute;
+      pointer-events: none;
+      z-index: 22;
+      font-family: var(--font-mono);
+      font-size: .57rem;
+      font-weight: 600;
+      color: #fff;
+      background: rgba(8, 10, 15, 0.88);
+      border-radius: 5px;
+      padding: 3px 6px;
+      opacity: 0;
+      transform: translate(-50%, calc(-100% - 10px));
+      white-space: nowrap;
+      line-height: 1.5;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .5);
+    }
+
+    /* ---------- Neural panel ---------- */
+    .nn-panel {
+      flex: 1;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+      min-width: 200px;
+    }
+
+    .nn-scroll {
+      width: 100%;
+      height: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: #232a36 transparent;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .nn-scroll::before {
+      content: '';
+      display: inline-block;
+      height: 100%;
+      vertical-align: middle;
+    }
+
+    .nn-scroll::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .nn-scroll::-webkit-scrollbar-thumb {
+      background: #232a36;
+      border-radius: 3px;
+    }
+
+    .nn-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .nn-inner {
+      display: inline-block;
+      vertical-align: middle;
+      position: relative;
+      transition: width .25s ease, height .25s ease;
+      white-space: normal;
+      text-align: left;
+    }
+
+    #nn-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .neuron {
+      fill: #12161d;
+      stroke: #1e242e;
+      stroke-width: 1.5;
+      transition: fill .35s ease, stroke .35s ease;
+    }
+
+    .neuron.active {
+      stroke: #fff;
+    }
+
+    .neuron.colored {
+      stroke-width: 2;
+    }
+
+    .synapse {
+      stroke: #13171f;
+      stroke-width: 1;
+      opacity: .25;
+      transition: stroke .35s ease, stroke-width .35s ease, opacity .35s ease;
+    }
+
+    .synapse.active {
+      stroke-width: 1.6;
+      opacity: 1;
+    }
+
+    .synapse.colored {
+      opacity: .7;
+      stroke-width: 1.2;
+    }
+
+    .synapse.dim {
+      opacity: .12;
+    }
+
+    .nn-complete-label {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-display);
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--success);
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      opacity: 0;
+      transition: opacity .8s ease .4s;
+      pointer-events: none;
+      z-index: 12;
+    }
+
+    .nn-complete-label.show {
+      opacity: 1;
+    }
+
+    .wa-text {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 700;
+      fill: #fff;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ---------- Zoom controls (NN panel) ---------- */
+    .nn-zoom-controls {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      z-index: 14;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .nn-zoom-controls button {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: .82rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s ease, border-color .15s ease, color .15s ease;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .nn-zoom-controls button:hover {
+      background: #1a2030;
+      border-color: var(--cool);
+      color: var(--cool);
+    }
+
+    .nn-zoom-controls button:active {
+      transform: scale(.92);
+    }
+
+    .nn-zoom-controls .zoom-level {
+      font-family: var(--font-mono);
+      font-size: .62rem;
+      color: var(--text-faint);
+      min-width: 36px;
+      text-align: center;
+      user-select: none;
+    }
+
+    /* Slider inside the NN zoom bar */
+    .nn-zoom-controls input[type=range].nn-zoom-slider {
+      -webkit-appearance: none;
+      width: 80px;
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--cool) 0%, var(--warm) 60%, var(--hot) 100%);
+      outline: none;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .nn-zoom-controls input[type=range].nn-zoom-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--bg);
+      box-shadow: 0 0 0 1px var(--border);
+      cursor: pointer;
+    }
+
+    @keyframes neuron-pulse {
+      0% {
+        filter: drop-shadow(0 0 0px transparent);
+      }
+
+      50% {
+        filter: drop-shadow(0 0 12px currentColor);
+      }
+
+      100% {
+        filter: drop-shadow(0 0 0px transparent);
+      }
+    }
+
+    .neuron.pulse {
+      animation: neuron-pulse .6s ease 2;
+    }
+
+    /* ---------- Signature strip ---------- */
+    .strip-wrap {
+      padding: 0 16px 16px;
+      flex-shrink: 0;
+    }
+
+    .strip-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+
+    .strip-head {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+
+    .strip-head .t {
+      font-family: var(--font-display);
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: .12em;
+    }
+
+    .strip-head .n {
+      font-family: var(--font-mono);
+      font-size: .68rem;
+      color: var(--text-faint);
+    }
+
+    .strip {
+      display: flex;
+      gap: 3px;
+      height: 26px;
+    }
+
+    .seg {
+      flex: 1;
+      border-radius: 3px;
+      background: #161b24;
+      border: 1px solid var(--border-soft);
+      transition: background .35s ease, border-color .35s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: .6rem;
+      color: transparent;
+    }
+
+    .seg.filled {
+      color: #04121c;
+      font-weight: 700;
+    }
+
+    @media (max-width:920px) {
+      .workspace {
+        flex-direction: column;
+      }
+
+      .rail {
+        width: auto;
+      }
+
+      .stage {
+        flex-direction: column;
+      }
+
+      .topology-panel {
+        height: 520px;
+      }
+
+      .nn-panel {
+        height: 280px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: .001s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .15s !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      <h1>Thermal<span>Mesh</span></h1>
+      <div class="tag">Decentralized AI = No Overheat</div>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('student')">Student Dashboard</button>
+      <button class="nav-tab" onclick="switchTab('ai-model')">AI Classification</button>
+      <button class="nav-tab" onclick="switchTab('launch')">Launch Campaign</button>
+      <button class="nav-tab" onclick="switchTab('donor')">Donor Explorer</button>
+      <button class="nav-tab" onclick="switchTab('owner')">Campaign Owner</button>
+    </div>
+    <div class="meta">
+      <button class="btn btn-outline" id="wallet-btn" onclick="connectWallet()"
+        style="padding: 6px 12px; font-size: .75rem; border-radius: 20px;">Connect Wallet</button>
+    </div>
+  </div>
+
+  <div id="tab-ai-model" class="tab-content">
+    <div class="workspace">
+      <aside class="rail">
+        <div class="card">
+          <h2>Console</h2>
+          <div class="field">
+            <div class="field-row"><label>Thermal ceiling</label><span class="val" id="threshold-val">82°C</span></div>
+            <input type="range" id="threshold-slider" min="65" max="95" value="82" step="1">
+          </div>
+          <div class="req-preview"><span class="k">request&nbsp;&rarr;</span> "Urgent shelter, food and medical relief
+            needed for displaced families in Gaza."</div>
+          <div class="btn-row">
+            <button class="run" id="btn-run">Run all</button>
+            <button class="btn-secondary" id="btn-fastforward"
+              style="border-color: var(--warn); color: var(--warn);">Fast Forward ⏭</button>
+          </div>
+          <div class="btn-row" style="margin-top: 8px;">
+            <button class="btn-secondary" id="btn-step">Next step</button>
+            <button class="btn-ghost" id="btn-reset">Reset</button>
+          </div>
+          <button class="run" id="btn-next-tab"
+            style="display: none; margin-top: 14px; background: var(--success); color: #000;"
+            onclick="switchTab('launch')">Proceed to Launch &rarr;</button>
+          <div class="phase-hint" id="phase-hint" style="margin-top: 10px;">Ready — click Next step or Run all.</div>
+        </div>
+
+        <div class="card">
+          <h2>Node identity</h2>
+          <div class="legend" id="legend"></div>
+        </div>
+
+        <div class="card">
+          <h2>Layer assignments</h2>
+          <div class="assign-list" id="assign-list">
+            <div class="assign-empty">No layers processed yet.</div>
+          </div>
+        </div>
+
+        <div class="card log-card">
+          <h2>System log</h2>
+          <div class="log-panel" id="log">
+            <div class="log-entry">Mesh idle. All nodes at ambient temperature. Awaiting request.</div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="stage">
+        <div class="topology-panel" id="topo-canvas">
+          <div class="panel-title">Network &amp; thermal state</div>
+          <svg class="connections" id="topo-svg"></svg>
+
+          <div class="req-node" id="req-node">
+            <div class="pill">"...relief needed for displaced families in Gaza."</div>
+          </div>
+
+          <div class="sys-node" id="orchestrator">
+            <svg class="pc-icon" width="28" height="22" viewBox="0 0 28 22" fill="none"
+              xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="24" height="14" rx="2" stroke="#bfe0ff" stroke-width="1.5" fill="#0b1524" />
+              <rect x="5" y="5" width="18" height="8" rx="1" fill="#1a3555" opacity=".7" />
+              <line x1="9" y1="16" x2="9" y2="20" stroke="#bfe0ff" stroke-width="1.5" />
+              <line x1="19" y1="16" x2="19" y2="20" stroke="#bfe0ff" stroke-width="1.5" />
+              <line x1="6" y1="20" x2="22" y2="20" stroke="#bfe0ff" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+            <p class="name">Orchestrator</p>
+            <p class="stat" id="orch-status">Listening</p>
+          </div>
+
+          <div class="result-node" id="result-node">
+            <div class="result-card" id="result-card">
+              <div class="lbl">Inference result</div>
+              <div class="cls" id="result-cls">Pending — layers still processing</div>
+              <div class="conf" id="result-conf">&nbsp;</div>
+              <div class="ledger" id="result-ledger">tx queued for settlement…</div>
+            </div>
+          </div>
+
+          <div class="packet" id="topo-packet"></div>
+          <div id="packet-values"></div>
+        </div>
+
+        <div class="stage-divider" id="stage-divider" title="Drag to resize panels"></div>
+
+        <div class="nn-panel" id="nn-panel">
+          <div class="panel-title">Neural network &middot; forward pass</div>
+          <div class="nn-zoom-controls" id="nn-zoom-controls">
+            <button id="nn-zoom-out" title="Zoom out">&minus;</button>
+            <input type="range" class="nn-zoom-slider" id="nn-zoom-slider" min="15" max="250" value="100" step="5">
+            <button id="nn-zoom-in" title="Zoom in">&plus;</button>
+            <span class="zoom-level" id="nn-zoom-level">100%</span>
+            <button id="nn-zoom-fit" title="Fit all"
+              style="font-size:.6rem;letter-spacing:.04em;width:auto;padding:0 8px;">FIT</button>
+          </div>
+          <div class="nn-scroll" id="nn-scroll">
+            <div class="nn-inner" id="nn-inner">
+              <svg id="nn-svg"></svg>
+            </div>
+          </div>
+          <div class="nn-complete-label" id="nn-complete-label">&#10022; Complete mesh &mdash; all nodes contributed
+            &#10022;</div>
+        </div>
+      </main>
+    </div>
+
+    <div class="strip-wrap">
+      <div class="strip-card">
+        <div class="strip-head">
+          <div class="t">Layer &middot; node assignment trail</div>
+          <div class="n" id="strip-summary">0 / 32 layers processed</div>
+        </div>
+        <div class="strip" id="strip"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Dashboard Tab -->
+  <div id="tab-student" class="tab-content active">
+    <div class="dashboard-container" style="justify-content: center;">
+      <div class="card" style="max-width: 600px; width: 100%; margin: 0 auto; height: fit-content;">
+        <h2>Initiate New Campaign</h2>
+        <div class="form-group">
+          <label>Funding Needs & Description</label>
+          <textarea class="form-control" id="student-desc"
+            rows="4">Urgent shelter, food and medical relief needed for displaced families in Gaza.</textarea>
+        </div>
+        <div class="form-group">
+          <label>Campaign Deadline</label>
+          <input type="date" class="form-control" id="student-deadline" style="color-scheme: dark;" value="2026-12-31">
+        </div>
+        <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="evaluateCampaignAI()">Evaluate
+          with AI</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Launch Campaign Tab -->
+  <div id="tab-launch" class="tab-content">
+    <div class="dashboard-container" style="justify-content: center;">
+      <div class="card" id="student-deployment-card"
+        style="max-width: 500px; width: 100%; margin: 0 auto; height: fit-content;">
+        <h2>Campaign Settings & Deployment</h2>
+
+        <div id="ai-evaluation-result"
+          style="display: none; margin-bottom: 20px; padding: 12px; background: rgba(56,189,248,0.1); border: 1px solid var(--cool); border-radius: 6px;">
+          <p style="margin: 0 0 8px; font-size: .8rem; color: var(--text-dim);">AI Classification Result:</p>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="campaign-category" id="student-eval-category">Humanitarian Relief</span>
+            <span style="font-family: var(--font-mono); font-size: .75rem; color: var(--success);">Confidence:
+              96.4%</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Target Amount (USDT)</label>
+          <input type="number" class="form-control" id="student-target" value="10000">
+        </div>
+        <div class="form-group">
+          <label>Proof Documents (PDF, Images)</label>
+          <input type="file" class="form-control" id="student-proofs">
+        </div>
+        <div style="margin-top: 20px;">
+          <button class="btn btn-primary" style="width: 100%;" onclick="deployCampaign()">Deploy Smart Contract</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Donor Dashboard Tab -->
+  <div id="tab-donor" class="tab-content">
+    <div class="dashboard-container" style="flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2 style="font-family: var(--font-display); margin: 0; font-size: 1.4rem;">Live Campaigns</h2>
+        <div style="font-family: var(--font-mono); font-size: .8rem; color: var(--text-dim);">Total Value Locked: <span
+            style="color: var(--cool);">14,250 USDT</span></div>
+      </div>
+
+      <div class="campaign-grid" id="donor-grid">
+        <!-- Mock campaigns will be injected here by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Campaign Owner Tab -->
+  <div id="tab-owner" class="tab-content">
+    <div class="dashboard-container" style="justify-content: center;">
+      <div class="card" style="max-width: 500px; width: 100%; margin: 0 auto; height: fit-content;">
+        <h2>Owner Withdrawal Portal</h2>
+        <div
+          style="margin-bottom: 24px; text-align: center; padding: 20px; background: var(--panel-2); border-radius: 8px;">
+          <p style="margin: 0; font-size: .85rem; color: var(--text-dim);">Smart Contract Available Balance</p>
+          <h3 style="margin: 8px 0 0; font-size: 2.5rem; color: var(--success); font-family: var(--font-mono);">
+            <span id="student-balance">0.00</span> <span style="font-size: 1rem;">USDT</span>
+          </h3>
+        </div>
+        <div class="form-group">
+          <label>Destination Wallet Address</label>
+          <input type="text" class="form-control" placeholder="0x...">
+        </div>
+        <div class="form-group">
+          <label>Withdraw Amount (USDT)</label>
+          <input type="number" class="form-control" id="student-withdraw-amt" placeholder="0.00">
+        </div>
+        <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="withdrawFunds()">Sign
+          Transaction & Withdraw</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const NODE_COLORS = ['#38bdf8', '#a78bfa', '#f472b6', '#fb923c', '#34d399'];
+      const TOTAL_LAYERS = 32;
+
+      // ---------- Tabs Logic ----------
+      let hasDrawnNN = false;
+      window.switchTab = function (tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+
+        document.getElementById('tab-' + tabId).classList.add('active');
+        document.querySelector(`.nav-tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+
+        // Re-layout SVG wires if switching to AI model tab
+        if (tabId === 'ai-model') {
+          requestAnimationFrame(() => {
+            if (!hasDrawnNN) {
+              drawNN();
+              hasDrawnNN = true;
+            }
+            layoutWires();
+            if (typeof currentZoom !== 'undefined') applyZoom(currentZoom);
+          });
+        }
+      }
+
+      // ---------- Decentralized Banking Logic ----------
+      window.connectWallet = function () {
+        const btn = document.getElementById('wallet-btn');
+        btn.textContent = 'Connecting...';
+        setTimeout(() => {
+          btn.textContent = '0x7F...3B92';
+          btn.classList.remove('btn-outline');
+          btn.classList.add('btn-primary');
+          btn.style.background = 'var(--success)';
+          btn.style.color = '#000';
+          btn.style.borderColor = 'var(--success)';
+        }, 800);
+      }
+
+      window.isFastForward = false;
+
+      window.evaluateCampaignAI = function () {
+        const btn = event.target;
+        btn.textContent = 'Evaluation Running...';
+        btn.disabled = true;
+
+        // Switch to AI tab to show visualization
+        switchTab('ai-model');
+        // Trigger the original run button
+        document.getElementById('btn-run').click();
+
+        // The display logic for the result is now toggled by updatePhaseButtons
+        document.getElementById('ai-evaluation-result').style.display = 'block';
+      }
+
+      window.deployCampaign = function () {
+        const target = document.getElementById('student-target').value;
+        if (!target) return alert('Please enter a target amount in USDT.');
+        const btn = event.target;
+        btn.textContent = 'Deploying...';
+        setTimeout(() => {
+          btn.textContent = 'Campaign Live!';
+          btn.style.background = 'var(--success)';
+          btn.style.color = '#000';
+          addMockCampaign("Gaza Refugee Food Relief", "Humanitarian Relief", 0, target);
+          alert('Smart Contract deployed successfully! Your campaign is now visible to Donors.');
+        }, 1500);
+      }
+
+      let studentBalance = 0;
+      window.withdrawFunds = function () {
+        const amt = parseFloat(document.getElementById('student-withdraw-amt').value);
+        if (!amt || amt <= 0 || amt > studentBalance) return alert('Invalid amount or insufficient balance.');
+        const btn = event.target;
+        btn.textContent = 'Signing tx...';
+        setTimeout(() => {
+          studentBalance -= amt;
+          document.getElementById('student-balance').textContent = studentBalance.toFixed(2);
+          btn.textContent = 'Sign & Withdraw';
+          document.getElementById('student-withdraw-amt').value = '';
+          alert('Withdrawal processed via smart contract!');
+        }, 1200);
+      }
+
+      window.donateUSDT = function (targetEl, maxVal) {
+        const amt = parseFloat(prompt(`Enter USDT amount to transfer (Max ${maxVal}):`, '50'));
+        if (amt && amt > 0) {
+          alert(`Transferring ${amt} USDT to smart contract...`);
+          // Mock student balance increase (assuming they own this campaign for demo)
+          studentBalance += amt;
+          document.getElementById('student-balance').textContent = studentBalance.toFixed(2);
+
+          // Update card progress
+          const card = targetEl.closest('.campaign-card');
+          const currentRaised = parseFloat(card.dataset.raised) + amt;
+          card.dataset.raised = currentRaised;
+          const target = parseFloat(card.dataset.target);
+          const pct = Math.min(100, (currentRaised / target) * 100);
+
+          card.querySelector('.raised-val').textContent = currentRaised.toFixed(0);
+          card.querySelector('.campaign-progress-fill').style.width = pct + '%';
+        }
+      }
+
+      function addMockCampaign(title, category, raised, target) {
+        const grid = document.getElementById('donor-grid');
+        const pct = Math.min(100, (raised / target) * 100);
+        const html = `
+          <div class="campaign-card" data-raised="${raised}" data-target="${target}">
+            <h3 class="campaign-title">${title}</h3>
+            <span class="campaign-category">${category}</span>
+            <div class="campaign-progress-bar">
+              <div class="campaign-progress-fill" style="width: ${pct}%"></div>
+            </div>
+            <div class="campaign-stats">
+              <span style="color: var(--text-dim)"><span class="raised-val" style="color: var(--text); font-weight: 600;">${raised}</span> / ${target} USDT</span>
+              <span style="color: var(--text-faint)">14 days left</span>
+            </div>
+            <button class="btn btn-outline" style="margin-top: 8px; width: 100%; padding: 8px;" onclick="donateUSDT(this, ${target - raised})">Transfer USDT</button>
+          </div>
+        `;
+        grid.insertAdjacentHTML('afterbegin', html);
+      }
+
+      // Initialize Donor grid with some mock data
+      window.addEventListener('load', () => {
+        addMockCampaign("Tech Devices for Local School", "Education Equipment", 1200, 5000);
+        addMockCampaign("Community Solar Panel Project", "Infrastructure", 320, 2000);
+      });
+
+      // ---------- Simulation Configuration ----------
+      const layerCounts = [
+        8, 8, 7, 7, 7, 6, 6, 6, 6, 5, 5, 5, 4, 4, 4, 4,
+        3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1
+      ];
+
+      const topoCanvas = document.getElementById('topo-canvas');
+      const topoSvg = document.getElementById('topo-svg');
+      const nnScroll = document.getElementById('nn-scroll');
+      const nnInner = document.getElementById('nn-inner');
+      const nnSvg = document.getElementById('nn-svg');
+      const nnCompleteLabel = document.getElementById('nn-complete-label');
+      const nnZoomInBtn = document.getElementById('nn-zoom-in');
+      const nnZoomOutBtn = document.getElementById('nn-zoom-out');
+      const nnZoomFitBtn = document.getElementById('nn-zoom-fit');
+      const nnZoomLevel = document.getElementById('nn-zoom-level');
+      const packet = document.getElementById('topo-packet');
+      const logPanel = document.getElementById('log');
+      const orchStatus = document.getElementById('orch-status');
+      const btnRun = document.getElementById('btn-run');
+      const btnStep = document.getElementById('btn-step');
+      const btnReset = document.getElementById('btn-reset');
+      const phaseHint = document.getElementById('phase-hint');
+      const thresholdSlider = document.getElementById('threshold-slider');
+      const thresholdVal = document.getElementById('threshold-val');
+      const legend = document.getElementById('legend');
+      const assignList = document.getElementById('assign-list');
+      const strip = document.getElementById('strip');
+      const stripSummary = document.getElementById('strip-summary');
+      const resultCard = document.getElementById('result-card');
+      const resultCls = document.getElementById('result-cls');
+      const resultConf = document.getElementById('result-conf');
+      const resultLedger = document.getElementById('result-ledger');
+
+      function setPhaseHint(text) { phaseHint.textContent = text; }
+
+      let threshold = parseInt(thresholdSlider.value, 10);
+      thresholdSlider.addEventListener('input', () => {
+        threshold = parseInt(thresholdSlider.value, 10);
+        thresholdVal.textContent = threshold + '°C';
+      });
+
+      function tempToColor(t) {
+        const stops = [{ t: 28, c: [56, 189, 248] }, { t: 60, c: [245, 158, 11] }, { t: 96, c: [239, 68, 68] }];
+        if (t <= stops[0].t) return `rgb(${stops[0].c.join(',')})`;
+        for (let i = 0; i < stops.length - 1; i++) {
+          if (t >= stops[i].t && t <= stops[i + 1].t) {
+            const f = (t - stops[i].t) / (stops[i + 1].t - stops[i].t);
+            const c = [0, 1, 2].map(k => Math.round(stops[i].c[k] + (stops[i + 1].c[k] - stops[i].c[k]) * f));
+            return `rgb(${c.join(',')})`;
+          }
+        }
+        return `rgb(${stops[stops.length - 1].c.join(',')})`;
+      }
+
+      function log(msg, type = '') {
+        const div = document.createElement('div');
+        div.className = `log-entry ${type}`;
+        const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+        div.innerHTML = `<span class="t">${time}</span>${msg}`;
+        logPanel.appendChild(div);
+        logPanel.scrollTop = logPanel.scrollHeight;
+      }
+
+      // ---------- Build 5 nodes around the orchestrator ----------
+      const radius = 145;
+      const nodes = [];
+
+      function drawWire() {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        topoSvg.appendChild(line);
+        return line;
+      }
+
+      function positionWire(line, elA, elB) {
+        const a = elA.getBoundingClientRect();
+        const b = elB.getBoundingClientRect();
+        const c = topoCanvas.getBoundingClientRect();
+        line.setAttribute('x1', a.left - c.left + a.width / 2);
+        line.setAttribute('y1', a.top - c.top + a.height / 2);
+        line.setAttribute('x2', b.left - c.left + b.width / 2);
+        line.setAttribute('y2', b.top - c.top + b.height / 2);
+      }
+
+      const orchestratorEl = document.getElementById('orchestrator');
+      const reqEl = document.getElementById('req-node');
+      const resultEl = document.getElementById('result-node');
+
+      const reqWire = drawWire();
+      const resultWire = drawWire();
+
+      // PC icon SVG as a string (colored by node color)
+      function pcIconSVG(color) {
+        return `<svg class="pc-icon" width="26" height="21" viewBox="0 0 28 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="24" height="14" rx="2" stroke="${color}" stroke-width="1.5" fill="#0d1017"/>
+          <rect x="5" y="5" width="18" height="8" rx="1" fill="${color}" opacity=".18"/>
+          <line x1="9" y1="16" x2="9" y2="20" stroke="${color}" stroke-width="1.5"/>
+          <line x1="19" y1="16" x2="19" y2="20" stroke="${color}" stroke-width="1.5"/>
+          <line x1="6" y1="20" x2="22" y2="20" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>`;
+      }
+
+      for (let i = 0; i < 5; i++) {
+        const angle = (-162 + i * 72) * Math.PI / 180;
+        const id = `vm-${i + 1}`;
+        const color = NODE_COLORS[i];
+
+        const el = document.createElement('div');
+        el.className = 'sys-node';
+        el.id = id;
+        el.style.color = color;
+        el.innerHTML = `
+      <div class="thermo-track"><div class="thermo-fill" id="thermo-${id}"></div></div>
+      ${pcIconSVG(color)}
+      <p class="name">Node ${i + 1}</p>
+      <p class="stat" id="stat-${id}">Idle</p>
+      <p class="temp" id="temp-${id}">—</p>
+    `;
+        topoCanvas.appendChild(el);
+        el.style.left = `calc(50% + ${Math.cos(angle) * radius}px)`;
+        el.style.top = `calc(50% + ${Math.sin(angle) * radius}px)`;
+
+        const wire = drawWire();
+
+        nodes.push({
+          id, el, color, wire,
+          thermoEl: document.getElementById(`thermo-${id}`),
+          statEl: document.getElementById(`stat-${id}`),
+          tempEl: document.getElementById(`temp-${id}`),
+          temp: 0, status: 'idle'
+        });
+
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.innerHTML = `<span class="dot" style="background:${color}"></span>Node ${i + 1} &mdash; layers routed to this node`;
+        legend.appendChild(row);
+      }
+
+      function layoutWires() {
+        positionWire(reqWire, reqEl, orchestratorEl);
+        positionWire(resultWire, orchestratorEl, resultEl);
+        nodes.forEach(n => positionWire(n.wire, orchestratorEl, n.el));
+      }
+
+      function resetNodeTemps() {
+        nodes.forEach(n => {
+          n.temp = 30 + Math.random() * 20;
+          n.status = 'idle';
+          updateNodeUI(n);
+        });
+      }
+
+      function updateNodeUI(n) {
+        const pct = Math.max(4, Math.min(100, ((n.temp - 22) / (98 - 22)) * 100));
+        n.thermoEl.style.height = pct + '%';
+        n.thermoEl.style.background = tempToColor(n.temp);
+        n.tempEl.textContent = n.temp.toFixed(1) + '°C';
+        n.tempEl.style.color = tempToColor(n.temp);
+        n.el.classList.remove('computing', 'checkpoint');
+        if (n.status === 'computing') n.el.classList.add('computing');
+        if (n.status === 'checkpoint') n.el.classList.add('checkpoint');
+        const labels = { idle: 'Idle', computing: 'Computing…', checkpoint: 'Checkpointing…', cooling: 'Cooling' };
+        n.statEl.textContent = labels[n.status] || n.status;
+      }
+
+      // ---------- Neural net (colored by owning node) ----------
+      const nnNodes = [];
+      const nnEdges = [];
+      // Track which color each layer has been assigned (null = unprocessed)
+      const layerColors = new Array(TOTAL_LAYERS).fill(null);
+
+      // The SVG is drawn much wider than the panel so it scrolls horizontally.
+      // COL_SPACING controls how many pixels between each layer column.
+      const COL_SPACING = 60;
+
+      let baseTotalW = 1000;
+      let baseTotalH = 480;
+
+      function drawNN() {
+        nnSvg.innerHTML = '';
+        nnNodes.length = 0; nnEdges.length = 0;
+        const panelH = nnScroll.clientHeight || 480;
+        const h = panelH - 20; // vertical padding
+        baseTotalW = COL_SPACING * (layerCounts.length + 1) + 40;
+        baseTotalH = panelH;
+
+        nnSvg.setAttribute('viewBox', `0 0 ${baseTotalW} ${baseTotalH}`);
+
+        for (let l = 0; l < layerCounts.length; l++) {
+          const count = layerCounts[l];
+          const x = COL_SPACING * (l + 1) + 20;
+          const rowH = h / (count + 1);
+          nnNodes[l] = [];
+          for (let n = 0; n < count; n++) {
+            const y = rowH * (n + 1) + 10;
+            nnNodes[l].push({ x, y });
+            const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            c.setAttribute('cx', x); c.setAttribute('cy', y);
+            // Scale radius: larger for fewer neurons to keep visual balance
+            const r = count <= 1 ? 9 : count <= 2 ? 7 : count <= 3 ? 6 : count <= 5 ? 5 : 4.5;
+            c.setAttribute('r', r);
+            c.setAttribute('class', `neuron layer-${l}`);
+            // Start completely colorless
+            c.style.fill = '#12161d';
+            c.style.stroke = '#1e242e';
+            nnSvg.appendChild(c);
+          }
+        }
+        for (let l = 0; l < layerCounts.length - 1; l++) {
+          nnEdges[l] = [];
+          for (let a = 0; a < layerCounts[l]; a++) {
+            for (let b = 0; b < layerCounts[l + 1]; b++) {
+              const s = nnNodes[l][a], e = nnNodes[l + 1][b];
+              const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+              line.setAttribute('x1', s.x); line.setAttribute('y1', s.y);
+              line.setAttribute('x2', e.x); line.setAttribute('y2', e.y);
+              line.setAttribute('class', 'synapse');
+              // Start completely colorless
+              line.style.stroke = '#13171f';
+              nnSvg.insertBefore(line, nnSvg.firstChild);
+              nnEdges[l].push({ line, start: s, end: e });
+            }
+          }
+        }
+
+        // Compute fit scale and update ZOOM_MIN dynamically so it cannot zoom smaller than the panel
+        const panelW = nnScroll.clientWidth || 800;
+        ZOOM_MIN = Math.max(0.1, Math.min(1.0, panelW / baseTotalW));
+        if (nnZoomSlider) nnZoomSlider.min = Math.floor(ZOOM_MIN * 100);
+
+        // Reset scroll and zoom state
+        nnScroll.scrollLeft = 0;
+        nnCompleteLabel.classList.remove('show');
+        if (currentZoom < ZOOM_MIN) currentZoom = ZOOM_MIN;
+        applyZoom(currentZoom);
+      }
+
+      // ---------- Manual zoom controls for NN panel ----------
+      let currentZoom = 1;
+      let ZOOM_MIN = 0.15;
+      const ZOOM_MAX = 2.5;
+      const ZOOM_STEP = 0.15;
+      const nnZoomSlider = document.getElementById('nn-zoom-slider');
+
+      function updateZoomLabel() {
+        nnZoomLevel.textContent = Math.round(currentZoom * 100) + '%';
+        if (nnZoomSlider) nnZoomSlider.value = Math.round(currentZoom * 100);
+      }
+
+      function applyZoom(newZoom, centerX) {
+        newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, newZoom));
+        const scrollBefore = nnScroll.scrollLeft;
+        const panelW = nnScroll.clientWidth;
+        const focusX = centerX !== undefined ? centerX : (scrollBefore + panelW / 2);
+        const focusRatio = focusX / (currentZoom || 1);
+
+        currentZoom = newZoom;
+
+        const newW = baseTotalW * currentZoom;
+        const newH = baseTotalH * currentZoom;
+
+        nnInner.style.width = newW + 'px';
+        nnInner.style.height = newH + 'px';
+        nnSvg.style.width = newW + 'px';
+        nnSvg.style.height = newH + 'px';
+
+        updateZoomLabel();
+
+        requestAnimationFrame(() => {
+          const newFocusX = focusRatio * currentZoom;
+          nnScroll.scrollLeft = newFocusX - panelW / 2;
+        });
+      }
+
+      function zoomIn() { applyZoom(currentZoom + ZOOM_STEP); }
+      function zoomOut() { applyZoom(currentZoom - ZOOM_STEP); }
+      function zoomReset() {
+        currentZoom = 1;
+        applyZoom(currentZoom);
+      }
+      function zoomFit() {
+        applyZoom(ZOOM_MIN);
+      }
+
+      function scrollToLayer(layerIndex) {
+        if (!nnNodes[layerIndex] || !nnNodes[layerIndex][0]) return;
+        const layerX = nnNodes[layerIndex][0].x * currentZoom;
+        const panelW = nnScroll.clientWidth;
+        const target = Math.max(0, layerX - panelW / 2);
+        nnScroll.scrollTo({ left: target, behavior: 'smooth' });
+      }
+
+      nnZoomInBtn.addEventListener('click', zoomIn);
+      nnZoomOutBtn.addEventListener('click', zoomOut);
+      nnZoomFitBtn.addEventListener('click', zoomFit);
+      if (nnZoomSlider) nnZoomSlider.addEventListener('input', () => applyZoom(parseInt(nnZoomSlider.value) / 100));
+
+      // Mousewheel zoom
+      nnScroll.addEventListener('wheel', (e) => {
+        if (!e.ctrlKey && !e.metaKey) return; // Only zoom with Ctrl+wheel
+        e.preventDefault();
+        const rect = nnScroll.getBoundingClientRect();
+        const mouseX = nnScroll.scrollLeft + (e.clientX - rect.left);
+        const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+        applyZoom(currentZoom + delta, mouseX);
+      }, { passive: false });
+
+      // Permanently color a layer's neurons with the node color
+      function colorizeLayer(layerIndex, color) {
+        if (layerIndex < 0 || layerIndex >= TOTAL_LAYERS) return;
+        layerColors[layerIndex] = color;
+        document.querySelectorAll(`.layer-${layerIndex}`).forEach(n => {
+          n.style.fill = color;
+          n.style.stroke = color;
+          n.classList.add('colored');
+        });
+      }
+
+      // Permanently color synapses between two layers
+      function colorizeSynapses(layerIndex, color) {
+        const edges = nnEdges[layerIndex];
+        if (!edges) return;
+        edges.forEach(e => {
+          e.line.style.stroke = color;
+          e.line.classList.add('colored');
+          e.line.classList.remove('dim');
+        });
+      }
+
+      function resetNNColors() {
+        layerColors.fill(null);
+        // Reset all neurons to colorless
+        document.querySelectorAll('.neuron').forEach(n => {
+          n.style.fill = '#12161d';
+          n.style.stroke = '#1e242e';
+          n.classList.remove('colored', 'active');
+        });
+        // Reset all synapses to colorless
+        document.querySelectorAll('.synapse').forEach(s => {
+          s.style.stroke = '#13171f';
+          s.classList.remove('colored', 'active', 'dim');
+        });
+      }
+
+      const packetValues = document.getElementById('packet-values');
+
+      function animatePacket(elA, elB, color, duration = 650, showValues = false) {
+        return new Promise(resolve => {
+          const a = elA.getBoundingClientRect(), b = elB.getBoundingClientRect(), c = topoCanvas.getBoundingClientRect();
+          const x1 = a.left - c.left + a.width / 2;
+          const y1 = a.top - c.top + a.height / 2;
+          const x2 = b.left - c.left + b.width / 2;
+          const y2 = b.top - c.top + b.height / 2;
+
+          packet.style.transition = 'none';
+          packet.style.background = color;
+          packet.style.boxShadow = `0 0 10px ${color}`;
+          packet.style.left = x1 + 'px';
+          packet.style.top = y1 + 'px';
+          packet.style.opacity = 1;
+
+          // Generate random model values to display on the moving dot
+          const aVal = (Math.random() * 2 - 1).toFixed(3);
+          const wVal = (Math.random() * 2 - 1).toFixed(3);
+          const bVal = (Math.random() * 0.5).toFixed(3);
+
+          if (showValues) {
+            packetValues.style.borderColor = color;
+            packetValues.innerHTML = `<span style="color:${color}">a</span>=${aVal} &nbsp;<span style="color:${color}">w</span>=${wVal} &nbsp;<span style="color:${color}">b</span>=${bVal}`;
+            packetValues.style.left = x1 + 'px';
+            packetValues.style.top = y1 + 'px';
+            packetValues.style.opacity = 1;
+            packetValues.style.transition = 'none';
+          }
+
+          void packet.offsetWidth;
+          packet.style.transition = `all ${duration}ms cubic-bezier(.4,0,.2,1)`;
+          packet.style.left = x2 + 'px';
+          packet.style.top = y2 + 'px';
+
+          if (showValues) {
+            packetValues.style.transition = `left ${duration}ms cubic-bezier(.4,0,.2,1), top ${duration}ms cubic-bezier(.4,0,.2,1), opacity .3s ease`;
+            packetValues.style.left = x2 + 'px';
+            packetValues.style.top = y2 + 'px';
+          }
+
+          setTimeout(() => {
+            packet.style.opacity = 0;
+            if (showValues) packetValues.style.opacity = 0;
+            resolve();
+          }, duration);
+        });
+      }
+
+      function animateLayer(layerIndex, color, duration = 520) {
+        return new Promise(resolve => {
+          const speed = window.isFastForward ? 0.05 : 1;
+          const edges = nnEdges[layerIndex];
+          if (!edges) {
+            // Last layer — no outgoing edges. Colorize + pulse so the user sees it.
+            colorizeLayer(layerIndex, color);
+            const neurons = document.querySelectorAll(`.layer-${layerIndex}`);
+            neurons.forEach(n => {
+              n.style.color = color; // for currentColor in the pulse keyframes
+              n.classList.add('pulse');
+              if (window.isFastForward) n.style.animationDuration = '0.05s';
+            });
+            setTimeout(() => {
+              neurons.forEach(n => {
+                n.classList.remove('pulse');
+                n.style.animationDuration = '';
+              });
+              resolve();
+            }, 650 * speed);
+            return;
+          }
+
+          // Light up the source layer neurons during animation
+          document.querySelectorAll(`.layer-${layerIndex}`).forEach(n => { n.classList.add('active'); });
+          // Light up edges during animation
+          edges.forEach(e => { e.line.classList.remove('dim', 'colored'); e.line.classList.add('active'); e.line.style.stroke = color; });
+
+          const anims = [];
+          const count = Math.min(edges.length, 5);
+          for (let i = 0; i < count; i++) {
+            const edge = edges[Math.floor(Math.random() * edges.length)];
+            const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            const isWeight = Math.random() > 0.5;
+            const value = isWeight ? (Math.random() * 2 - 1) : (Math.random() * 1.2);
+            txt.textContent = `${isWeight ? 'w' : 'a'}=${value.toFixed(2)}`;
+            txt.setAttribute('class', 'wa-text');
+            txt.setAttribute('x', edge.start.x); txt.setAttribute('y', edge.start.y - 5);
+            txt.style.fill = color;
+            nnSvg.appendChild(txt);
+            const anim = txt.animate([
+              { transform: 'translate(0,0)', opacity: 1 },
+              { transform: `translate(${edge.end.x - edge.start.x}px, ${edge.end.y - edge.start.y}px)`, opacity: 0 }
+            ], { duration: duration, easing: 'ease-in-out', fill: 'forwards' });
+            anims.push(anim.finished);
+          }
+
+          Promise.all(anims).then(() => {
+            // Permanently colorize only this layer's neurons — strict left-to-right order
+            colorizeLayer(layerIndex, color);
+            // Permanently colorize the synapses coming OUT of this layer
+            colorizeSynapses(layerIndex, color);
+            // Briefly highlight next-layer neurons to show data arriving (not permanent)
+            const nextNeurons = document.querySelectorAll(`.layer-${layerIndex + 1}`);
+            nextNeurons.forEach(n => {
+              n.classList.add('active');
+              setTimeout(() => n.classList.remove('active'), 350 * speed);
+            });
+            document.querySelectorAll(`.layer-${layerIndex}`).forEach(n => n.classList.remove('active'));
+            nnSvg.querySelectorAll('.wa-text').forEach(t => t.remove());
+            resolve();
+          });
+        });
+      }
+
+      // ---------- Signature strip ----------
+      function buildStrip() {
+        strip.innerHTML = '';
+        for (let i = 0; i < TOTAL_LAYERS; i++) {
+          const seg = document.createElement('div');
+          seg.className = 'seg';
+          seg.id = `seg-${i}`;
+          strip.appendChild(seg);
+        }
+        stripSummary.textContent = `0 / ${TOTAL_LAYERS} layers processed`;
+      }
+
+      function fillStrip(from, to, color, title) {
+        for (let i = from; i < to; i++) {
+          const seg = document.getElementById(`seg-${i}`);
+          seg.classList.add('filled');
+          seg.style.background = color;
+          seg.style.borderColor = color;
+          seg.textContent = i;
+          if (title) seg.title = title;
+        }
+        stripSummary.textContent = `${to} / ${TOTAL_LAYERS} layers processed`;
+      }
+
+      function addAssignmentRow(node, start, end) {
+        const empty = assignList.querySelector('.assign-empty');
+        if (empty) empty.remove();
+        const count = end - start;
+        const row = document.createElement('div');
+        row.className = 'assign-row';
+        row.style.borderLeftColor = node.color;
+        row.innerHTML = `<span class="an" style="color:${node.color}">Node ${nodes.indexOf(node) + 1}</span><span class="ar">L${start}\u2013L${end - 1} <em>(${count} layer${count > 1 ? 's' : ''})</em></span>`;
+        assignList.appendChild(row);
+        assignList.scrollTop = assignList.scrollHeight;
+      }
+
+      function clearAssignments() {
+        assignList.innerHTML = '<div class="assign-empty">No layers processed yet.</div>';
+      }
+
+      function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+      // ---------- Phase-based simulation state ----------
+      // phase progression: idle -> request -> select -> layer (repeats) -> checkpoint -> select... -> aggregate -> settle -> done
+      let phase = 'idle';
+      let layerPtr = 0;
+      let lastNode = null;
+      let currentNode = null;
+      let startLayer = 0;
+      // Track how many times each node was used (for round-robin fairness)
+      let nodeUseCounts = nodes.map(() => 0);
+      let nodeLastUsedAt = nodes.map(() => -1);
+      let selectionRound = 0;
+      let busy = false;
+
+      function updatePhaseButtons() {
+        const finished = phase === 'done';
+        thresholdSlider.disabled = (phase !== 'idle');
+        btnStep.disabled = busy || finished;
+        btnRun.disabled = busy || finished;
+        const nextBtn = document.getElementById('btn-next-tab');
+        if (nextBtn) {
+          nextBtn.style.display = finished ? 'block' : 'none';
+        }
+      }
+
+      // One atomic tick of the pipeline. Each call performs exactly one visible action —
+      // this is what "Next step" triggers once, and what "Run all" loops automatically.
+      async function advancePhase() {
+        if (busy || phase === 'done') return;
+        busy = true;
+        updatePhaseButtons();
+
+        const speed = window.isFastForward ? 0.05 : 1;
+
+        if (phase === 'idle') {
+          logPanel.innerHTML = '';
+          log('Request received by orchestrator. Preparing 32-layer classification pass.', 'info');
+          orchStatus.textContent = 'Receiving request';
+          setPhaseHint('Sending the request to the orchestrator…');
+          await animatePacket(reqEl, orchestratorEl, '#5cd0ff', 750 * speed);
+          phase = 'select';
+
+        } else if (phase === 'select') {
+          // Smart selection: score each node by temperature + recency penalty
+          // This ensures ALL nodes get used, not just the two coolest
+          const scored = nodes.map((n, i) => {
+            let score = n.temp;
+            // Penalize the very last used node more heavily
+            if (n === lastNode) score += 15;
+            // Small penalty for recently-used nodes
+            if (nodeLastUsedAt[i] >= 0) score += Math.max(0, 5 - (selectionRound - nodeLastUsedAt[i]) * 2);
+            return { node: n, score, idx: i };
+          });
+          scored.sort((a, b) => a.score - b.score);
+          currentNode = scored[0].node;
+          const nodeIdx = scored[0].idx;
+          nodeUseCounts[nodeIdx]++;
+          nodeLastUsedAt[nodeIdx] = selectionRound;
+          selectionRound++;
+          currentNode.status = 'computing';
+          updateNodeUI(currentNode);
+          const idx = nodes.indexOf(currentNode) + 1;
+          orchStatus.textContent = `Routing to Node ${idx}`;
+          log(`Orchestrator selects <b>Node ${idx}</b> — coolest available at ${currentNode.temp.toFixed(1)}°C.`, 'info');
+          setPhaseHint(`Sending checkpoint state to Node ${idx}…`);
+          currentNode.wire.classList.add('flow');
+          await animatePacket(orchestratorEl, currentNode.el, currentNode.color, 620 * speed, true);
+          currentNode.wire.classList.remove('flow');
+          startLayer = layerPtr;
+          phase = 'layer';
+
+        } else if (phase === 'layer') {
+          const idx = nodes.indexOf(currentNode) + 1;
+          setPhaseHint(`Processing layer L${layerPtr} on Node ${idx}…`);
+          scrollToLayer(layerPtr);
+          await animateLayer(layerPtr, currentNode.color, 480 * speed);
+          layerPtr++;
+          // Lower heat gain so nodes can process more layers before checkpoint
+          currentNode.temp += 6 + Math.random() * 4;
+          // Faster cooling for idle nodes — they cool significantly while waiting
+          nodes.forEach(n => { if (n !== currentNode) n.temp = Math.max(24, n.temp - (5 + Math.random() * 4)); });
+          nodes.forEach(updateNodeUI);
+          phase = (currentNode.temp >= threshold || layerPtr >= TOTAL_LAYERS) ? 'checkpoint' : 'layer';
+
+        } else if (phase === 'checkpoint') {
+          const idx = nodes.indexOf(currentNode) + 1;
+          const end = layerPtr;
+          const rangeLabel = `L${startLayer}\u2013L${end - 1}`;
+          fillStrip(startLayer, end, currentNode.color, `Node ${idx}: ${rangeLabel}`);
+          addAssignmentRow(currentNode, startLayer, end);
+
+          if (layerPtr < TOTAL_LAYERS) {
+            log(`THERMAL LIMIT: Node ${idx} reached ${currentNode.temp.toFixed(1)}°C (ceiling ${threshold}°C) after ${rangeLabel}.`, 'error');
+            log(`Serializing activation values (a) and weight coefficients (w) at the ${rangeLabel} boundary.`, 'warn');
+            currentNode.status = 'checkpoint';
+            updateNodeUI(currentNode);
+            setPhaseHint(`Sending checkpoint from Node ${idx} back to the orchestrator…`);
+            currentNode.wire.classList.add('flow');
+            await animatePacket(currentNode.el, orchestratorEl, currentNode.color, 600 * speed, true);
+            currentNode.wire.classList.remove('flow');
+            log(`Checkpoint received — ${rangeLabel} committed. Node ${idx} entering cooldown.`, 'success');
+            currentNode.status = 'cooling';
+            updateNodeUI(currentNode);
+            lastNode = currentNode;
+            currentNode = null;
+            orchStatus.textContent = 'State cached';
+            phase = 'select';
+          } else {
+            log(`Node ${idx} completed the final layer (${rangeLabel}). Full forward pass finished.`, 'success');
+            currentNode.status = 'cooling';
+            updateNodeUI(currentNode);
+            lastNode = currentNode;
+            currentNode = null;
+            phase = 'aggregate';
+          }
+
+        } else if (phase === 'aggregate') {
+          orchStatus.textContent = 'Aggregating output';
+          setPhaseHint('Aggregating logits at the orchestrator…');
+          log('All 32 layers processed across the mesh. Aggregating logits at orchestrator.', 'info');
+          // Zoom out to reveal the complete colored mesh
+          zoomFit();
+          nnCompleteLabel.classList.add('show');
+          log('Zooming out to reveal the complete mesh topology.', 'info');
+          await wait(450 * speed);
+          resultCls.textContent = 'Humanitarian Aid';
+          resultConf.textContent = 'confidence 96.4%';
+          resultCard.classList.add('ready');
+          log('Classification complete: "Gaza Humanitarian Aid" (96.4% confidence).', 'success');
+          await animatePacket(orchestratorEl, resultEl, '#34d399', 700 * speed);
+          phase = 'settle';
+
+        } else if (phase === 'settle') {
+          setPhaseHint('Executing the settlement transaction…');
+          await wait(250 * speed);
+          resultLedger.textContent = 'settlement tx 0x9f2a…d13c — routing 2,000 USDC to verified relief pool';
+          resultLedger.classList.add('show');
+          orchStatus.textContent = 'Settled';
+          log('Settlement contract executed — 2,000 USDC routed to the verified relief pool.', 'success');
+          phase = 'done';
+          setPhaseHint('Run complete — proceed to next step.');
+        }
+
+        busy = false;
+        updatePhaseButtons();
+      }
+
+      async function runAll() {
+        while (phase !== 'done') {
+          await advancePhase();
+          await wait(140 * (window.isFastForward ? 0.05 : 1));
+        }
+      }
+
+      function resetMesh() {
+        window.isFastForward = false;
+        phase = 'idle'; layerPtr = 0; lastNode = null; currentNode = null; startLayer = 0; busy = false;
+        nodeUseCounts = nodes.map(() => 0);
+        nodeLastUsedAt = nodes.map(() => -1);
+        selectionRound = 0;
+        logPanel.innerHTML = '<div class="log-entry">Mesh idle. All nodes at ambient temperature. Awaiting request.</div>';
+        orchStatus.textContent = 'Listening';
+        resultCard.classList.remove('ready');
+        resultCls.textContent = 'Pending — layers still processing';
+        resultConf.textContent = '\u00a0';
+        resultLedger.classList.remove('show');
+        buildStrip();
+        clearAssignments();
+        resetNodeTemps();
+        resetNNColors();
+        zoomReset();
+        nnCompleteLabel.classList.remove('show');
+        setPhaseHint('Ready — click Next step or Run all.');
+        updatePhaseButtons();
+      }
+
+      btnStep.addEventListener('click', () => advancePhase());
+      btnRun.addEventListener('click', () => runAll());
+      btnReset.addEventListener('click', () => resetMesh());
+      document.getElementById('btn-fastforward').addEventListener('click', () => {
+        window.isFastForward = true;
+      });
+
+      // ---------- Idle ambient drift ----------
+      setInterval(() => {
+        nodes.forEach(n => {
+          if (n.status === 'idle' || n.status === 'cooling') {
+            n.temp += (Math.random() - 0.5) * 0.6;
+            n.temp = Math.max(24, Math.min(46, n.temp));
+            updateNodeUI(n);
+          }
+        });
+      }, 1400);
+
+      window.addEventListener('load', () => {
+        layoutWires();
+        resetNodeTemps();
+        buildStrip();
+        updatePhaseButtons();
+        if (document.getElementById('tab-ai-model').classList.contains('active')) {
+          drawNN();
+          hasDrawnNN = true;
+        }
+      });
+      window.addEventListener('resize', () => {
+        if (document.getElementById('tab-ai-model').classList.contains('active')) {
+          layoutWires();
+          drawNN();
+          hasDrawnNN = true;
+        } else {
+          hasDrawnNN = false;
+        }
+      });
+
+      // ---------- Draggable stage divider ----------
+      const stageDivider = document.getElementById('stage-divider');
+      const stageEl = document.querySelector('.stage');
+      const topoPanelEl = document.getElementById('topo-canvas');
+      const nnPanelEl = document.getElementById('nn-panel');
+
+      let isDragging = false;
+      let dragStartX = 0;
+      let startTopoW = 0;
+      let startNnW = 0;
+
+      stageDivider.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        isDragging = true;
+        dragStartX = e.clientX;
+
+        const topoRect = topoPanelEl.getBoundingClientRect();
+        const nnRect = nnPanelEl.getBoundingClientRect();
+        startTopoW = topoRect.width;
+        startNnW = nnRect.width;
+
+        // Lock both panels to pixel widths, disable flex
+        topoPanelEl.style.flex = 'none';
+        topoPanelEl.style.width = startTopoW + 'px';
+        nnPanelEl.style.flex = 'none';
+        nnPanelEl.style.width = startNnW + 'px';
+
+        stageDivider.classList.add('dragging');
+        document.body.classList.add('col-resizing');
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const delta = e.clientX - dragStartX;
+        const minW = 200;
+        let newTopoW = startTopoW + delta;
+        let newNnW = startNnW - delta;
+
+        // Enforce minimums
+        if (newTopoW < minW) { newTopoW = minW; newNnW = startTopoW + startNnW - minW; }
+        if (newNnW < minW) { newNnW = minW; newTopoW = startTopoW + startNnW - minW; }
+
+        topoPanelEl.style.width = newTopoW + 'px';
+        nnPanelEl.style.width = newNnW + 'px';
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        stageDivider.classList.remove('dragging');
+        document.body.classList.remove('col-resizing');
+
+        // Redraw everything to fit new sizes
+        layoutWires();
+        drawNN();
+      });
+    })();
+  </script>
+</body>
+
+</html>
